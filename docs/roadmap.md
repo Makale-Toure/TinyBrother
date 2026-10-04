@@ -22,10 +22,14 @@ Repository layout, packaging, CI, README, example rule.
 Possible improvements: field-presence pre-filter to skip rules faster, correlation /
 aggregation rules (`count() by`), alert deduplication.
 
-## Milestone 3: Dashboard
-- [ ] `/api/alerts`, `/api/stats`, `/api/attack-coverage`
-- [ ] Alert timeline, severity breakdown, event details
-- [ ] ATT&CK coverage heatmap (rules loaded vs. techniques actually triggered)
+## Milestone 3: Dashboard ✅
+- [x] JSON API: `/api/stats`, `/api/alerts` (filters, search, paging), `/api/alerts/{id}`,
+      `/api/attack`, interactive docs at `/api/docs`
+- [x] KPI tiles, stacked severity timeline, severity breakdown, top rules
+- [x] ATT&CK heatmap: techniques covered by rules vs. triggered, click to filter
+- [x] Alert drawer with full event fields and triage (new / acknowledged / closed / false positive)
+- [x] Light and dark themes, auto-refresh, `scan --store` to explore recordings
+- [x] Hardening: localhost only, Host header allow-list, JSON-only writes, XSS-safe rendering
 
 ## Milestone 4: Evaluation
 - [ ] Windows VM lab + Atomic Red Team (see `docs/lab-setup.md`)

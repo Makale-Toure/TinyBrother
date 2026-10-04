@@ -39,8 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--json", action="store_true", help="print JSON lines")
     scan.add_argument("--events", action="store_true", help="print events instead of alerts")
     scan.add_argument("--stats", action="store_true", help="print counts instead of details")
+    scan.add_argument("--store", action="store_true",
+                      help="save alerts in the database (to explore them in the dashboard)")
 
-    sub.add_parser("dashboard", help="start the local web dashboard")
+    dash = sub.add_parser("dashboard", help="start the local web dashboard")
+    dash.add_argument("--open", action="store_true", help="open it in the browser")
+    dash.add_argument("--port", type=int, help="override the configured port")
     rules = sub.add_parser("rules", help="show loaded Sigma rules and ATT&CK coverage")
     rules.add_argument("--unsupported", action="store_true", help="list rules that were skipped")
     return p
@@ -78,13 +82,18 @@ def cmd_scan(args: argparse.Namespace, cfg) -> int:
     # PowerShell/cmd do not expand wildcards for native programs: do it here
     files: list[str] = []
     for pattern in args.files:
-        matches = sorted(glob.glob(pattern)) if glob.has_magic(pattern) else [pattern]
+        matches = sorted(glob.glob(pattern, recursive=True)) if glob.has_magic(pattern) else [pattern]
         if not matches or not all(Path(m).is_file() for m in matches):
             print(f"error: file not found: {pattern}", file=sys.stderr)
             return 2
         files.extend(matches)
     args.files = files
     engine = None if args.events else load_engine(cfg)
+    conn = None
+    if args.store and engine is not None:
+        from tinybrother.storage.db import connect, save_alerts
+
+        conn = connect(cfg.database)
     counter: Counter = Counter()
     by_rule: Counter = Counter()
     total = errors = n_alerts = 0
@@ -98,7 +107,10 @@ def cmd_scan(args: argparse.Namespace, cfg) -> int:
                     if not args.stats:
                         print(to_json(event) if args.json else format_line(event))
                 else:
-                    for alert in engine.evaluate(event):
+                    alerts = engine.evaluate(event)
+                    if conn is not None and alerts:
+                        save_alerts(conn, alerts)
+                    for alert in alerts:
                         n_alerts += 1
                         by_rule[(alert.severity.value, alert.rule_title)] += 1
                         if not args.stats:
@@ -112,6 +124,9 @@ def cmd_scan(args: argparse.Namespace, cfg) -> int:
         if args.limit and total >= args.limit:
             break
 
+    if conn is not None:
+        conn.close()
+        print(f"alerts saved to {cfg.database}", file=sys.stderr)
     if not args.json:
         msg = f"\n{total} event(s), {errors} unreadable record(s)"
         if engine is not None:
@@ -219,7 +234,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "dashboard":
         from tinybrother.dashboard.app import run
 
-        run(cfg)
+        if args.port:
+            cfg.dashboard_port = args.port
+        run(cfg, open_browser=args.open)
         return 0
     if args.command == "rules":
         return cmd_rules(args, cfg)

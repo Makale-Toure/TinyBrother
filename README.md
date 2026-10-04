@@ -15,6 +15,8 @@ and shows everything in a local web dashboard. No cloud, no Elastic stack, no 12
 
 </div>
 
+![TinyBrother dashboard](docs/dashboard.png)
+
 ---
 
 ## Why TinyBrother?
@@ -35,7 +37,7 @@ with open detection rules?**
 | ✅ | Sigma rule engine: ~2,400 SigmaHQ Windows rules + your own custom rules |
 | ✅ | MITRE ATT&CK enrichment (tactic, technique, sub-technique) on every alert |
 | ✅ | SQLite storage for alerts and their triggering events |
-| 🚧 | Local dashboard: alert timeline, severity breakdown, ATT&CK coverage heatmap |
+| ✅ | Local dashboard: alert timeline, severity breakdown, ATT&CK heatmap, alert triage |
 | ✅ | Detection benchmark on public attack recordings ([results](docs/benchmark.md)) |
 | 📋 | Detection-coverage benchmark with Atomic Red Team |
 | 📋 | IOC enrichment (hash reputation), anomaly detection, notifications |
@@ -118,8 +120,11 @@ tinybrother watch
 tinybrother scan path\to\Security.evtx
 tinybrother scan --stats path\to\*.evtx
 
-# 6. open the dashboard
-tinybrother dashboard        # -> http://127.0.0.1:8765
+# 6. open the dashboard (in a second terminal while `watch` runs)
+tinybrother dashboard --open   # -> http://127.0.0.1:8765
+
+# no live alerts yet? load the attack recordings into the dashboard
+tinybrother scan --store samples\*.evtx
 ```
 
 ## Detection results

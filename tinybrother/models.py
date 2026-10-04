@@ -56,4 +56,5 @@ class Alert:
     event: Event
     techniques: list[AttackTechnique] = field(default_factory=list)
     description: str | None = None
+    rule_path: str | None = None
     created_at: datetime = field(default_factory=datetime.now)

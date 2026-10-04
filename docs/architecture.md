@@ -35,8 +35,10 @@ the MITRE ATT&CK STIX bundle to add names and tactic ordering for the coverage h
 **Storage** (`tinybrother/storage/`) is SQLite in WAL mode. Only events that trigger an alert are
 stored in full by default, to keep the database small on a personal machine.
 
-**Dashboard** (`tinybrother/dashboard/`) is FastAPI serving a JSON API and a static page, bound to
-`127.0.0.1` only.
+**Dashboard** (`tinybrother/dashboard/`) is FastAPI serving a JSON API and a dependency-free
+static page (vanilla JS, SVG charts), bound to `127.0.0.1` only. It reads the same SQLite
+database that `watch` writes to (WAL mode allows both at once). Severity colours always come
+with a distinct shape so they are never conveyed by colour alone.
 
 ## Threat model (summary)
 
@@ -48,4 +50,7 @@ TinyBrother itself holds sensitive data and runs as administrator, so it is a ta
 | Tampering: attacker edits rules to blind detection | rules dir ACL limited to admins; rule hash logged at startup |
 | Tampering: attacker clears logs | dedicated rule for EID 1102 / 104 (log cleared) |
 | DoS: event flood exhausts CPU/disk | bounded queue, rate limiting, DB retention policy |
-| Elevation: malicious Sigma YAML | `yaml.safe_load` only, regex timeouts |
+| Elevation: malicious Sigma YAML | safe YAML loader only, no code execution in rules |
+| Spoofing: DNS rebinding from a malicious website to the local API | Host header allow-list (127.0.0.1, localhost) |
+| Tampering: cross-site request changes alert status | write endpoint accepts JSON only, so a CORS preflight is required and never granted |
+| Elevation: stored XSS through attacker-controlled event fields (command lines, file names) | every value is escaped before rendering in the dashboard |

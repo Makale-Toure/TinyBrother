@@ -125,6 +125,7 @@ class DetectionEngine:
                         event=event,
                         techniques=techniques_from_tags(cr.rule.tags),
                         description=cr.rule.description,
+                        rule_path=cr.rule.path,
                     )
                 )
         alerts.sort(key=lambda a: severity_rank(a.severity.value), reverse=True)
