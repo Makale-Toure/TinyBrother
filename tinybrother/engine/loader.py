@@ -9,6 +9,9 @@ import yaml
 
 from tinybrother.engine.rule import SigmaRule
 
+# libyaml-based loader is ~10x faster when available (bundled in PyYAML wheels)
+_Loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
 
 def _as_list(v) -> list:
     if v is None:
@@ -30,7 +33,8 @@ def load_rules(
         files = sorted(base.rglob("*.yml")) + sorted(base.rglob("*.yaml"))
         for path in files:
             try:
-                docs = [doc for doc in yaml.safe_load_all(path.read_text(encoding="utf-8")) if doc]
+                text = path.read_text(encoding="utf-8")
+                docs = [doc for doc in yaml.load_all(text, Loader=_Loader) if doc]
             except yaml.YAMLError as exc:
                 if errors is not None:
                     errors.append((str(path), f"YAML error: {exc}"))

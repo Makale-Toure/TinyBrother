@@ -63,6 +63,7 @@ def load_engine(cfg):
 
 
 def cmd_scan(args: argparse.Namespace, cfg) -> int:
+    import glob
     from pathlib import Path
 
     from tinybrother.collectors.evtx_file import EvtxFileCollector
@@ -74,10 +75,15 @@ def cmd_scan(args: argparse.Namespace, cfg) -> int:
         to_json,
     )
 
-    for path in args.files:
-        if not Path(path).is_file():
-            print(f"error: file not found: {path}", file=sys.stderr)
+    # PowerShell/cmd do not expand wildcards for native programs: do it here
+    files: list[str] = []
+    for pattern in args.files:
+        matches = sorted(glob.glob(pattern)) if glob.has_magic(pattern) else [pattern]
+        if not matches or not all(Path(m).is_file() for m in matches):
+            print(f"error: file not found: {pattern}", file=sys.stderr)
             return 2
+        files.extend(matches)
+    args.files = files
     engine = None if args.events else load_engine(cfg)
     counter: Counter = Counter()
     by_rule: Counter = Counter()
@@ -171,9 +177,9 @@ def cmd_rules(args: argparse.Namespace, cfg) -> int:
     print("by severity: " + "  ".join(f"{k}={levels[k]}" for k in
           ["critical", "high", "medium", "low", "informational"] if levels[k]))
 
-    print(f"\n{'channel':<55} {'rules':>6}")
+    print(f"\n{'rules':>6}  channel")
     for ch, n in engine.rules_per_channel().most_common():
-        print(f"{ch:<55} {n:>6}")
+        print(f"{n:>6}  {ch}")
 
     tactics: C = C()
     techniques: set[str] = set()
