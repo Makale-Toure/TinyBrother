@@ -12,3 +12,14 @@ Never run attack simulations on your everyday machine.
 4. Start `tinybrother watch`, then run a test, e.g. `Invoke-AtomicTest T1059.001 -TestNumbers 1`.
 5. Record whether TinyBrother raised an alert, then `Invoke-AtomicTest ... -Cleanup`.
 6. Revert to the snapshot between test campaigns.
+
+## Offline samples (no VM needed)
+
+The [EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES) project
+provides real `.evtx` recordings of attacks, sorted by ATT&CK tactic. They are the fastest way
+to test the pipeline:
+
+```powershell
+tinybrother scan --stats .\samples\*.evtx
+tinybrother scan .\samples\exec_sysmon_1_11_lolbin_rundll32_openurl_FileProtocolHandler.evtx
+```

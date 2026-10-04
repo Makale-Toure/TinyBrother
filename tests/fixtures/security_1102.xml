@@ -1,0 +1,16 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Eventlog" />
+    <EventID>1102</EventID>
+    <TimeCreated SystemTime="2026-10-04T11:00:00Z" />
+    <EventRecordID>913</EventRecordID>
+    <Channel>Security</Channel>
+    <Computer>NEWGATE</Computer>
+  </System>
+  <UserData>
+    <LogFileCleared xmlns="http://manifests.microsoft.com/win/2004/08/windows/eventlog">
+      <SubjectUserName>attacker</SubjectUserName>
+      <SubjectDomainName>NEWGATE</SubjectDomainName>
+    </LogFileCleared>
+  </UserData>
+</Event>

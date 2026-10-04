@@ -1,0 +1,23 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Sysmon" Guid="{5770385f-c22a-43e0-bf4c-06f5698ffbd9}" />
+    <EventID>1</EventID>
+    <Version>5</Version>
+    <Level>4</Level>
+    <TimeCreated SystemTime="2026-10-04T10:15:42.1234567Z" />
+    <EventRecordID>48213</EventRecordID>
+    <Channel>Microsoft-Windows-Sysmon/Operational</Channel>
+    <Computer>NEWGATE</Computer>
+  </System>
+  <EventData>
+    <Data Name="RuleName">-</Data>
+    <Data Name="UtcTime">2026-10-04 10:15:42.120</Data>
+    <Data Name="ProcessId">7312</Data>
+    <Data Name="Image">C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe</Data>
+    <Data Name="CommandLine">powershell.exe -nop -w hidden -enc SQBFAFgA</Data>
+    <Data Name="User">NEWGATE\makyt</Data>
+    <Data Name="IntegrityLevel">High</Data>
+    <Data Name="ParentImage">C:\Windows\explorer.exe</Data>
+    <Data Name="Description"></Data>
+  </EventData>
+</Event>

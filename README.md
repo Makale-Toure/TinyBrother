@@ -29,9 +29,9 @@ with open detection rules?**
 
 | Status | Feature |
 |:---:|---|
-| 🚧 | Real-time collection from Windows Event Log (Security, Sysmon, PowerShell, Defender) |
-| 🚧 | Offline analysis of `.evtx` files (forensics / replay mode) |
-| 🚧 | Event normalisation to a common schema (ECS-inspired) |
+| ✅ | Real-time collection from Windows Event Log (Security, Sysmon, PowerShell, Defender) |
+| ✅ | Offline analysis of `.evtx` files (forensics / replay mode) |
+| ✅ | Event normalisation to a common schema |
 | 🚧 | Sigma rule engine (SigmaHQ community rules + your own custom rules) |
 | 🚧 | MITRE ATT&CK enrichment (tactic, technique, sub-technique) on every alert |
 | 🚧 | SQLite storage for events and alerts |

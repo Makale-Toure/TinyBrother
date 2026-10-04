@@ -1,0 +1,16 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Security-Auditing" Guid="{54849625-5478-4994-a5ba-3e3b0328c30d}" />
+    <EventID>4624</EventID>
+    <TimeCreated SystemTime="2026-10-04T08:00:01.000000000Z" />
+    <EventRecordID>912</EventRecordID>
+    <Channel>Security</Channel>
+    <Computer>NEWGATE</Computer>
+  </System>
+  <EventData>
+    <Data Name="TargetUserName">makyt</Data>
+    <Data Name="TargetDomainName">NEWGATE</Data>
+    <Data Name="LogonType">2</Data>
+    <Data Name="IpAddress">127.0.0.1</Data>
+  </EventData>
+</Event>

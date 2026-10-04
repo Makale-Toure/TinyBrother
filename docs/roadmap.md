@@ -4,10 +4,11 @@
 Repository layout, packaging, CI, README, example rule.
 
 ## Milestone 1: Collection
-- [ ] `normalizer.windows.from_xml` with unit tests on sample XML
-- [ ] `EvtxFileCollector` (python-evtx)
-- [ ] `WindowsEventLogCollector` with bookmarks
-- [ ] `tinybrother scan file.evtx` prints events
+- [x] `normalizer.windows.from_xml` with unit tests on sample XML
+- [x] `EvtxFileCollector` (python-evtx), validated on EVTX-ATTACK-SAMPLES
+- [x] `WindowsEventLogCollector` (XPath polling on EventRecordID + JSON state file)
+- [x] `tinybrother scan file.evtx` (`--stats`, `--json`, `--limit`)
+- [ ] Validate `tinybrother watch` on a real Windows host
 
 ## Milestone 2: Detection
 - [ ] Sigma field modifiers and wildcards

@@ -1,0 +1,14 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Service Control Manager" />
+    <EventID Qualifiers="16384">7036</EventID>
+    <TimeCreated SystemTime="2026-10-04T09:30:00.5Z" />
+    <EventRecordID>77</EventRecordID>
+    <Channel>System</Channel>
+    <Computer>NEWGATE</Computer>
+  </System>
+  <EventData>
+    <Data>Windows Update</Data>
+    <Data>running</Data>
+  </EventData>
+</Event>
