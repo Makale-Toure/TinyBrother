@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.coverage
+# runtime data
+data/
+*.db
+*.sqlite
+config/tinybrother.yaml
+# downloaded SigmaHQ rules (fetched by scripts/fetch_sigma_rules.py)
+rules/sigma/*
+!rules/sigma/.gitkeep
+# local event exports
+*.evtx
+!tests/fixtures/*.evtx

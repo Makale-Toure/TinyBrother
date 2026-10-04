@@ -1,0 +1,19 @@
+# Copy to config/tinybrother.yaml and adjust.
+channels:
+  - Security
+  - Microsoft-Windows-Sysmon/Operational
+  - Microsoft-Windows-PowerShell/Operational
+  - Microsoft-Windows-Windows Defender/Operational
+
+rule_dirs:
+  - rules/sigma
+  - rules/custom
+
+database: data/tinybrother.db
+
+# alerts below this level are stored but hidden by default
+min_severity: low   # informational | low | medium | high | critical
+
+dashboard:
+  host: 127.0.0.1   # keep it local
+  port: 8765

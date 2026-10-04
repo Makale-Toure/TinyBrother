@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TinyBrother</title>
+  <style>
+    :root { --bg:#0f1417; --fg:#e6edf0; --muted:#8a9aa3; --accent:#2dd4bf; }
+    body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--fg);
+           display:grid; place-items:center; min-height:100vh; }
+    h1 { color:var(--accent); margin:0; }
+    p { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>👁️ TinyBrother</h1>
+    <p id="status">Checking backend…</p>
+  </main>
+  <script>
+    fetch("/api/health").then(r => r.json())
+      .then(d => document.getElementById("status").textContent = `Backend OK · v${d.version}`)
+      .catch(() => document.getElementById("status").textContent = "Backend unreachable");
+  </script>
+</body>
+</html>

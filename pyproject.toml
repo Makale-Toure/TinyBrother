@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tinybrother"
+version = "0.1.0"
+description = "A tiny personal SOC for Windows: Sigma detection + MITRE ATT&CK mapping on your own machine."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "MT" }]
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6.0",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+  "python-evtx>=0.7",
+  "pywin32>=306; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+tinybrother = "tinybrother.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tinybrother*"]
+
+[tool.setuptools.package-data]
+tinybrother = ["dashboard/static/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
