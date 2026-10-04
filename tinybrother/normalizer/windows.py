@@ -57,8 +57,12 @@ def _convert(value: str | None) -> str | None:
 
 def from_xml(xml: str) -> Event:
     """Convert one rendered Windows event (XML string) into an Event."""
+    if xml.startswith("<?xml"):
+        xml_body = xml[xml.index("?>") + 2:]
+    else:
+        xml_body = xml
     try:
-        root = ET.fromstring(xml)
+        root = ET.fromstring(xml_body)
     except ET.ParseError as exc:
         raise NormalizationError(f"invalid XML: {exc}") from exc
 

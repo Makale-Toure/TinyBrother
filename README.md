@@ -32,10 +32,11 @@ with open detection rules?**
 | ✅ | Real-time collection from Windows Event Log (Security, Sysmon, PowerShell, Defender) |
 | ✅ | Offline analysis of `.evtx` files (forensics / replay mode) |
 | ✅ | Event normalisation to a common schema |
-| 🚧 | Sigma rule engine (SigmaHQ community rules + your own custom rules) |
-| 🚧 | MITRE ATT&CK enrichment (tactic, technique, sub-technique) on every alert |
-| 🚧 | SQLite storage for events and alerts |
+| ✅ | Sigma rule engine: ~2,400 SigmaHQ Windows rules + your own custom rules |
+| ✅ | MITRE ATT&CK enrichment (tactic, technique, sub-technique) on every alert |
+| ✅ | SQLite storage for alerts and their triggering events |
 | 🚧 | Local dashboard: alert timeline, severity breakdown, ATT&CK coverage heatmap |
+| ✅ | Detection benchmark on public attack recordings ([results](docs/benchmark.md)) |
 | 📋 | Detection-coverage benchmark with Atomic Red Team |
 | 📋 | IOC enrichment (hash reputation), anomaly detection, notifications |
 
@@ -88,8 +89,6 @@ TinyBrother/
 
 ## Quick start
 
-> TinyBrother is in early development. The commands below describe the target usage.
-
 **Requirements:** Windows 10/11, Python 3.10+, an **administrator** terminal (reading the
 Security log requires it). Sysmon is strongly recommended.
 
@@ -109,15 +108,32 @@ python scripts\fetch_sigma_rules.py
 # 3. copy and adjust the config
 copy config\tinybrother.example.yaml config\tinybrother.yaml
 
-# 4. watch your machine live
+# 4. check which rules were loaded and the ATT&CK coverage
+tinybrother rules
+
+# 5. watch your machine live (alerts are stored in data\tinybrother.db)
 tinybrother watch
 
-# ...or analyse an existing log file
+# ...or hunt in an existing log file
 tinybrother scan path\to\Security.evtx
+tinybrother scan --stats path\to\*.evtx
 
-# 5. open the dashboard
+# 6. open the dashboard
 tinybrother dashboard        # -> http://127.0.0.1:8765
 ```
+
+## Detection results
+
+Benchmarked against the 278 attack recordings of
+[EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES):
+
+| | |
+|---|---|
+| Sigma rules loaded | 2,394 / 2,417 (99%) |
+| Recordings detected (≥ medium alert) | **201 / 278 (72%)** |
+| Throughput (offline scan) | ~1,700 events/s |
+
+Full breakdown per ATT&CK tactic in [`docs/benchmark.md`](docs/benchmark.md).
 
 ## Testing detections safely
 

@@ -68,3 +68,38 @@ def stats_table(counter: Counter, top: int = 15) -> str:
 
 def count(events: Iterable[Event]) -> Counter:
     return Counter((e.channel, e.event_id) for e in events)
+
+
+_SEV_TAG = {
+    "critical": "CRIT",
+    "high": "HIGH",
+    "medium": "MED ",
+    "low": "LOW ",
+    "informational": "INFO",
+}
+
+
+def format_alert(alert) -> str:
+    ev = alert.event
+    ts = ev.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+    techs = ",".join(t.technique_id for t in alert.techniques) or "-"
+    head = f"{ts}  [{_SEV_TAG.get(alert.severity.value, '????')}] {alert.rule_title}  ({techs})"
+    return f"{head}\n    {short_channel(ev.channel)} {ev.event_id}  {summary(ev)}"
+
+
+def alert_to_json(alert) -> str:
+    return json.dumps(
+        {
+            "timestamp": alert.event.timestamp.isoformat(),
+            "rule_id": alert.rule_id,
+            "rule_title": alert.rule_title,
+            "severity": alert.severity.value,
+            "techniques": [t.technique_id for t in alert.techniques],
+            "tactics": sorted({ta for t in alert.techniques for ta in t.tactics}),
+            "channel": alert.event.channel,
+            "event_id": alert.event.event_id,
+            "record_id": alert.event.record_id,
+            "fields": alert.event.fields,
+        },
+        ensure_ascii=False,
+    )

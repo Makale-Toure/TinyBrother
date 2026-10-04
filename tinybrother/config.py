@@ -9,9 +9,11 @@ import yaml
 
 DEFAULT_CHANNELS = [
     "Security",
+    "System",
     "Microsoft-Windows-Sysmon/Operational",
     "Microsoft-Windows-PowerShell/Operational",
     "Microsoft-Windows-Windows Defender/Operational",
+    "Windows PowerShell",
 ]
 
 

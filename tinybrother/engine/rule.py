@@ -16,4 +16,7 @@ class SigmaRule:
     tags: list[str] = field(default_factory=list)
     description: str | None = None
     falsepositives: list[str] = field(default_factory=list)
+    status: str | None = None
+    author: str | None = None
+    references: list[str] = field(default_factory=list)
     path: str | None = None

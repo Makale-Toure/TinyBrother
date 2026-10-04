@@ -1,9 +1,11 @@
 # Copy to config/tinybrother.yaml and adjust.
 channels:
   - Security
+  - System
   - Microsoft-Windows-Sysmon/Operational
   - Microsoft-Windows-PowerShell/Operational
   - Microsoft-Windows-Windows Defender/Operational
+  - Windows PowerShell
 
 rule_dirs:
   - rules/sigma
