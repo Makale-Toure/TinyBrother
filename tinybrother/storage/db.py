@@ -24,6 +24,20 @@ CREATE TABLE IF NOT EXISTS alerts (
     techniques  TEXT,
     event_ref   INTEGER REFERENCES events(id)
 );
+CREATE TABLE IF NOT EXISTS sensor_status (
+    id            INTEGER PRIMARY KEY CHECK (id = 1),
+    started_at    TEXT NOT NULL,
+    heartbeat_at  TEXT NOT NULL,
+    stopped_at    TEXT,
+    pid           INTEGER,
+    hostname      TEXT,
+    is_admin      INTEGER,
+    rules_loaded  INTEGER,
+    events_total  INTEGER NOT NULL DEFAULT 0,
+    alerts_total  INTEGER NOT NULL DEFAULT 0,
+    last_event_at TEXT,
+    channels_json TEXT
+);
 CREATE INDEX IF NOT EXISTS idx_alerts_created ON alerts(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_ts ON events(timestamp);
 """
@@ -106,6 +120,26 @@ def insert_alert(conn: sqlite3.Connection, alert, event_row: int | None) -> int:
         ),
     )
     return int(cur.lastrowid)
+
+
+def write_sensor_status(conn: sqlite3.Connection, status: dict) -> None:
+    """Upsert the single row describing the running `watch` sensor."""
+    import json
+
+    conn.execute(
+        "INSERT INTO sensor_status (id, started_at, heartbeat_at, stopped_at, pid, hostname, "
+        "is_admin, rules_loaded, events_total, alerts_total, last_event_at, channels_json) "
+        "VALUES (1, :started_at, :heartbeat_at, :stopped_at, :pid, :hostname, :is_admin, "
+        ":rules_loaded, :events_total, :alerts_total, :last_event_at, :channels_json) "
+        "ON CONFLICT(id) DO UPDATE SET started_at=excluded.started_at, "
+        "heartbeat_at=excluded.heartbeat_at, stopped_at=excluded.stopped_at, pid=excluded.pid, "
+        "hostname=excluded.hostname, is_admin=excluded.is_admin, "
+        "rules_loaded=excluded.rules_loaded, events_total=excluded.events_total, "
+        "alerts_total=excluded.alerts_total, last_event_at=excluded.last_event_at, "
+        "channels_json=excluded.channels_json",
+        {**status, "channels_json": json.dumps(status.get("channels", []))},
+    )
+    conn.commit()
 
 
 def save_alerts(conn: sqlite3.Connection, alerts) -> None:

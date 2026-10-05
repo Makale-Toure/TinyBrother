@@ -227,3 +227,67 @@ def attack_matrix(conn: sqlite3.Connection, hours: float | None) -> dict[str, Co
             for ta in tactics_for(t, rule_tactics):
                 out[ta][t] += 1
     return out
+
+
+SYSMON_CHANNEL = "Microsoft-Windows-Sysmon/Operational"
+STALE_AFTER_SECONDS = 30
+
+
+def sensor_status(conn: sqlite3.Connection, now: datetime | None = None) -> dict:
+    """State of the `watch` sensor: running, stopped or never started, plus warnings."""
+    now = now or datetime.now(timezone.utc)
+    r = conn.execute("SELECT * FROM sensor_status WHERE id = 1").fetchone()
+    if r is None:
+        return {"state": "never", "warnings": [{
+            "code": "never_started",
+            "message": "Start `tinybrother watch` in an administrator terminal to analyse "
+                       "this machine's activity.",
+        }]}
+
+    channels = json.loads(r["channels_json"] or "[]")
+    age = (now - parse_ts(r["heartbeat_at"])).total_seconds()
+    if r["stopped_at"]:
+        state = "stopped"
+    elif age > STALE_AFTER_SECONDS:
+        state = "stale"  # process died without a clean shutdown
+    else:
+        state = "running"
+
+    warnings = []
+    if state != "running":
+        warnings.append({
+            "code": "not_running",
+            "message": "New activity on this machine is not analysed. Start "
+                       "`tinybrother watch` in an administrator terminal.",
+        })
+    by_name = {c["name"]: c for c in channels}
+    if by_name.get(SYSMON_CHANNEL, {}).get("status") == "not_found":
+        warnings.append({
+            "code": "sysmon_missing",
+            "message": "Most rules (process, network, registry and file activity) cannot fire "
+                       "without it. Install it with `scripts\\install_sysmon.ps1` from an "
+                       "administrator terminal.",
+        })
+    if r["is_admin"] == 0 or any(c["status"] == "access_denied" for c in channels):
+        warnings.append({
+            "code": "not_admin",
+            "message": "The Security log (logons, privilege use, log clearing) cannot be read. "
+                       "Restart `tinybrother watch` from an administrator terminal.",
+        })
+
+    return {
+        "state": state,
+        "started_at": r["started_at"],
+        "heartbeat_at": r["heartbeat_at"],
+        "stopped_at": r["stopped_at"],
+        "heartbeat_age_seconds": round(age, 1),
+        "hostname": r["hostname"],
+        "pid": r["pid"],
+        "is_admin": None if r["is_admin"] is None else bool(r["is_admin"]),
+        "rules_loaded": r["rules_loaded"],
+        "events_total": r["events_total"],
+        "alerts_total": r["alerts_total"],
+        "last_event_at": r["last_event_at"],
+        "channels": channels,
+        "warnings": warnings,
+    }

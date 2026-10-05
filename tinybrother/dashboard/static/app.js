@@ -20,6 +20,8 @@ const ICONS = {
   inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  radar: '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M12 18h.01"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>',
   ext: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
 };
 const icon = (name, cls = "icon") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
@@ -91,6 +93,90 @@ function moveTip(ev) {
   if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
   if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
   tip.style.left = `${x}px`; tip.style.top = `${y}px`;
+}
+
+// ---------------------------------------------------------------- live sensor
+const CHANNEL_LABEL = {
+  "Security": "Security",
+  "System": "System",
+  "Microsoft-Windows-Sysmon/Operational": "Sysmon",
+  "Microsoft-Windows-PowerShell/Operational": "PowerShell",
+  "Microsoft-Windows-Windows Defender/Operational": "Microsoft Defender",
+  "Windows PowerShell": "Windows PowerShell (classic)",
+};
+const CHANNEL_STATUS = {
+  ok: ["ok", "Monitored"], not_found: ["warn", "Not installed"], access_denied: ["bad", "Access denied"],
+  error: ["bad", "Error"], pending: ["ghost", "Starting…"],
+};
+// `code` spans in server messages -> <code>, after escaping
+const richText = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+
+function renderSensor(st) {
+  const live = $("live");
+  live.classList.remove("off", "idle");
+  const stateText = {
+    running: "Monitoring this machine",
+    stopped: "Monitoring stopped",
+    stale: "Monitoring stopped unexpectedly",
+    never: "Monitoring not started",
+  }[st.state];
+  if (st.state === "running") {
+    $("live-text").textContent = `Live · last event ${ago(st.last_event_at)}`;
+  } else {
+    live.classList.add(st.state === "never" ? "idle" : "off");
+    $("live-text").textContent = stateText;
+  }
+
+  $("warnings").innerHTML = (st.warnings || []).map((w) => {
+    const danger = w.code === "not_running" || w.code === "never_started";
+    const title = { not_running: "Live monitoring is off", never_started: "Live monitoring has never run",
+      sysmon_missing: "Sysmon is not installed", not_admin: "Not running as administrator" }[w.code] || "Warning";
+    return `<div class="callout ${danger ? "danger" : "warning"}" role="alert">${icon("warn")}<div class="title">${esc(title)}</div><div class="desc">${richText(w.message)}</div></div>`;
+  }).join("");
+
+  const el = $("sensor");
+  if (st.state === "never") {
+    el.innerHTML = `<div class="card-header"><div><h2 class="card-title">Live monitoring</h2>
+      <p class="card-description">The dashboard only shows <b>alerts</b>: events that match one of your Sigma rules. Normal activity (logons, unlocks…) is analysed but not displayed.</p></div>${icon("radar")}</div>
+      <div class="card-content" style="display:block"><div class="sensor-state"><span class="state-dot never"></span>${esc(stateText)}</div>
+      <p class="muted" style="margin:8px 0 0">Run <code>tinybrother watch</code> in an administrator terminal; this panel will turn green within a few seconds.</p></div>`;
+    return;
+  }
+  const facts = [
+    ["Running since", st.state === "running" ? ago(st.started_at).replace(" ago", "") : "—"],
+    ["Last event received", st.last_event_at ? ago(st.last_event_at) : "none yet"],
+    ["Last heartbeat", ago(st.heartbeat_at)],
+    ["Events analysed", fmtN(st.events_total)],
+    ["Alerts raised", fmtN(st.alerts_total)],
+    ["Rules loaded", fmtN(st.rules_loaded ?? 0)],
+  ];
+  el.innerHTML = `
+    <div class="card-header"><div><h2 class="card-title">Live monitoring</h2>
+      <p class="card-description">Every event is checked against your Sigma rules; only matches become alerts. Normal activity such as logging in or unlocking the screen is analysed but not shown.</p></div>${icon("radar")}</div>
+    <div class="card-content">
+      <div>
+        <div class="sensor-state"><span class="state-dot ${esc(st.state)}"></span>${esc(stateText)}
+          ${st.hostname ? `<span class="badge ghost">${esc(st.hostname)}</span>` : ""}
+          ${st.is_admin === true ? '<span class="badge ok">Administrator</span>' : st.is_admin === false ? '<span class="badge bad">Not administrator</span>' : ""}</div>
+        <div class="facts">${facts.map(([k, v]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("")}</div>
+      </div>
+      <div class="channels">${(st.channels || []).map((c) => {
+        const [cls, label] = CHANNEL_STATUS[c.status] || ["ghost", c.status];
+        const sub = c.status === "ok" ? `${fmtN(c.events)} events${c.last_event_at ? ` · ${ago(c.last_event_at)}` : ""}` : "";
+        return `<div class="channel" title="${esc(c.name)}"><span class="name">${esc(CHANNEL_LABEL[c.name] || c.name)}</span><span class="sub">${esc(sub)}</span><span class="badge ${cls}">${esc(label)}</span></div>`;
+      }).join("")}</div>
+    </div>`;
+}
+let lastAlertsTotal = null;
+async function refreshSensor() {
+  try {
+    const st = await api("/api/status");
+    renderSensor(st);
+    // a new alert arrived: refresh the charts and the table right away
+    if (lastAlertsTotal !== null && st.alerts_total !== lastAlertsTotal) refreshAll(state.offset === 0 && !state.q);
+    lastAlertsTotal = st.alerts_total ?? null;
+  }
+  catch { $("live").classList.add("off"); $("live-text").textContent = "Dashboard backend unreachable"; }
 }
 
 // ---------------------------------------------------------------- KPIs
@@ -391,11 +477,9 @@ async function refreshAll(resetAlerts = true) {
     lastStats = s;
     renderKpis(s); renderTimeline(s.timeline); renderSeverity(s); renderAttack(a);
     if (resetAlerts) await refreshAlerts(true);
-    $("live").classList.remove("off");
-    $("live-text").textContent = `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
   } catch (e) {
     $("live").classList.add("off");
-    $("live-text").textContent = "Backend unreachable";
+    $("live-text").textContent = "Dashboard backend unreachable";
     console.error(e);
   }
 }
@@ -431,6 +515,8 @@ async function init() {
   api("/api/health").then((h) => {
     $("header-meta").textContent = `personal SOC · v${h.version}` + (ATTACK.attack_version ? ` · ATT&CK v${ATTACK.attack_version}` : "");
   }).catch(() => {});
+  refreshSensor();
+  setInterval(() => { if (!document.hidden) refreshSensor(); }, 5000);
   setRange(state.range);
   setInterval(() => {
     if (!document.hidden && !$("sheet").classList.contains("open")) refreshAll(state.offset === 0 && !state.q);

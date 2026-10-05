@@ -38,6 +38,7 @@ with open detection rules?**
 | ✅ | MITRE ATT&CK enrichment on every alert, with technique names and descriptions (ATT&CK v19, offline) |
 | ✅ | SQLite storage for alerts and their triggering events |
 | ✅ | Local dashboard: alert timeline, severity breakdown, ATT&CK heatmap, alert triage |
+| ✅ | Sensor health: is `watch` running, which logs are readable, Sysmon / admin warnings |
 | ✅ | Detection benchmark on public attack recordings ([results](docs/benchmark.md)) |
 | 📋 | Detection-coverage benchmark with Atomic Red Team |
 | 📋 | IOC enrichment (hash reputation), anomaly detection, notifications |

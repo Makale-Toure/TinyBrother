@@ -86,6 +86,7 @@ button, input, select { font: inherit; color: inherit; }
 .live { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted-foreground); }
 .live .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); animation: pulse 2s infinite; }
 .live.off .dot { background: var(--sev-critical); animation: none; }
+.live.idle .dot { background: var(--muted-foreground); animation: none; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 55%, transparent); } 100% { box-shadow: 0 0 0 7px transparent; } }
 
 main { max-width: 1440px; margin: 0 auto; padding: 24px; display: grid; gap: 16px; }
@@ -267,3 +268,36 @@ td.details { color: var(--muted-foreground); font: 12px/1.5 var(--font-mono); wo
   .card-header, .card-content, .card-footer { padding-left: 16px; padding-right: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- alerts (shadcn Alert) ---------- */
+.warnings { display: grid; gap: 10px; }
+.warnings:empty { display: none; }
+.callout { display: grid; grid-template-columns: 18px 1fr; gap: 2px 12px; align-items: start; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; background: var(--card); font-size: 13px; }
+.callout .icon { margin-top: 2px; }
+.callout .title { font-weight: 600; }
+.callout .desc { grid-column: 2; color: var(--muted-foreground); }
+.callout.warning { border-color: color-mix(in oklab, var(--sev-medium) 45%, var(--border)); }
+.callout.warning .icon, .callout.warning .title { color: color-mix(in oklab, var(--sev-medium) 75%, var(--foreground)); }
+.callout.danger { border-color: color-mix(in oklab, var(--sev-critical) 45%, var(--border)); }
+.callout.danger .icon, .callout.danger .title { color: var(--sev-critical); }
+code { font: 12px var(--font-mono); background: var(--muted); border-radius: 4px; padding: 1px 5px; color: var(--foreground); }
+
+/* ---------- sensor card ---------- */
+.sensor .card-content { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 24px; }
+@media (max-width: 1000px) { .sensor .card-content { grid-template-columns: 1fr; } }
+.sensor-state { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+.state-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.state-dot.running { background: #0ca30c; box-shadow: 0 0 0 4px color-mix(in oklab, #0ca30c 25%, transparent); }
+.state-dot.stopped, .state-dot.stale { background: var(--sev-critical); }
+.state-dot.never { background: var(--muted-foreground); }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; margin-top: 16px; }
+@media (max-width: 640px) { .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fact .k { font-size: 12px; color: var(--muted-foreground); }
+.fact .v { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 1px; }
+.channels { display: grid; gap: 6px; align-content: start; }
+.channel { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px); font-size: 13px; }
+.channel .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.channel .sub { color: var(--muted-foreground); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.badge.ok { background: color-mix(in oklab, #0ca30c 14%, transparent); color: color-mix(in oklab, #0ca30c 80%, var(--foreground)); border-color: color-mix(in oklab, #0ca30c 35%, transparent); }
+.badge.bad { background: color-mix(in oklab, var(--sev-critical) 12%, transparent); color: var(--sev-critical); border-color: color-mix(in oklab, var(--sev-critical) 35%, transparent); }
+.badge.warn { background: color-mix(in oklab, var(--sev-medium) 14%, transparent); color: color-mix(in oklab, var(--sev-medium) 70%, var(--foreground)); border-color: color-mix(in oklab, var(--sev-medium) 40%, transparent); }

@@ -153,6 +153,7 @@ def _rank(level: str) -> int:
 def cmd_watch(args: argparse.Namespace, cfg) -> int:
     from tinybrother.collectors.windows_eventlog import WindowsEventLogCollector
     from tinybrother.output import alert_to_json, format_alert, format_line, to_json
+    from tinybrother.sensor import SensorStatus
     from tinybrother.storage.db import connect, save_alerts
 
     if sys.platform != "win32":
@@ -160,20 +161,31 @@ def cmd_watch(args: argparse.Namespace, cfg) -> int:
         return 2
     engine = load_engine(cfg)
     conn = connect(cfg.database)
+    sensor = SensorStatus(conn, cfg.channels, engine.report.loaded)
+    if sensor.admin is False:
+        logging.getLogger("tinybrother").warning(
+            "not running as administrator: the Security channel will not be readable"
+        )
     state = cfg.database.parent / "state.json"
-    collector = WindowsEventLogCollector(cfg.channels, state_file=state, from_start=args.from_start)
+    collector = WindowsEventLogCollector(
+        cfg.channels, state_file=state, from_start=args.from_start, on_poll=sensor.heartbeat
+    )
+    sensor.channel_status = collector.channel_status  # shared dict, filled at startup
     try:
         for event in collector.events():
+            sensor.record_event(event.channel, event.timestamp)
             if args.events:
                 print(to_json(event) if args.json else format_line(event), flush=True)
             alerts = engine.evaluate(event)
             if alerts:
                 save_alerts(conn, alerts)
+                sensor.record_alerts(len(alerts))
                 for alert in alerts:
                     print(alert_to_json(alert) if args.json else format_alert(alert), flush=True)
     except KeyboardInterrupt:
         print("\nstopped.", file=sys.stderr)
     finally:
+        sensor.stop()
         conn.close()
     return 0
 

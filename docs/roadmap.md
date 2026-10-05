@@ -30,6 +30,7 @@ aggregation rules (`count() by`), alert deduplication.
 - [x] Alert drawer with full event fields and triage (new / acknowledged / closed / false positive)
 - [x] Light and dark themes, auto-refresh, `scan --store` to explore recordings
 - [x] Hardening: localhost only, Host header allow-list, JSON-only writes, XSS-safe rendering
+- [x] Live sensor health: heartbeat, per-channel status and counters, Sysmon/admin warnings
 - [x] shadcn/ui-style redesign (Geist fonts, self-hosted), ATT&CK technique names and descriptions
 
 ## Milestone 4: Evaluation

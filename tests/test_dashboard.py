@@ -71,3 +71,8 @@ def test_invalid_range(client):
 def test_index_served(client):
     r = client.get("/")
     assert r.status_code == 200 and "TinyBrother" in r.text
+
+
+def test_status_endpoint(client):
+    st = client.get("/api/status").json()
+    assert st["state"] == "never"

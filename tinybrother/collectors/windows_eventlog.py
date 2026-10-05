@@ -33,12 +33,16 @@ class WindowsEventLogCollector(Collector):
         state_file: str | Path = "data/state.json",
         poll_interval: float = 1.0,
         from_start: bool = False,
+        on_poll=None,
     ) -> None:
         self.channels = channels
         self.state_file = Path(state_file)
         self.poll_interval = poll_interval
         self.from_start = from_start
         self.state: dict[str, int] = self._load_state()
+        # channel -> "ok" | "not_found" | "access_denied" | "error"
+        self.channel_status: dict[str, str] = {}
+        self.on_poll = on_poll  # called after every polling cycle (heartbeat)
 
     # ---------- state ----------
     def _load_state(self) -> dict[str, int]:
@@ -95,12 +99,16 @@ class WindowsEventLogCollector(Collector):
                 if ch not in self.state:
                     self.state[ch] = 0 if self.from_start else self._latest_record_id(ch)
                 active.append(ch)
+                self.channel_status[ch] = "ok"
             except pywintypes.error as exc:
                 if exc.winerror == ERROR_EVT_CHANNEL_NOT_FOUND:
+                    self.channel_status[ch] = "not_found"
                     log.warning("channel not found, skipped: %s (is Sysmon installed?)", ch)
                 elif exc.winerror == ERROR_ACCESS_DENIED:
+                    self.channel_status[ch] = "access_denied"
                     log.warning("access denied to %s: run TinyBrother as administrator", ch)
                 else:
+                    self.channel_status[ch] = "error"
                     log.warning("cannot open %s: %s", ch, exc)
         self._save_state()
         return active
@@ -124,4 +132,6 @@ class WindowsEventLogCollector(Collector):
                     yield event
             if self.state != before:
                 self._save_state()
+            if self.on_poll:
+                self.on_poll()
             time.sleep(self.poll_interval)

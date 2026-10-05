@@ -98,6 +98,12 @@ def create_app(cfg: Config, with_coverage: bool = True) -> FastAPI:
             "rules_loaded": coverage.rules if coverage and coverage.ready else None,
         }
 
+    @app.get("/api/status")
+    def sensor() -> dict:
+        """Is live monitoring running? Which channels are readable?"""
+        with db() as conn:
+            return queries.sensor_status(conn)
+
     @app.get("/api/stats")
     def stats(range: str = "24h") -> dict:
         with db() as conn:
