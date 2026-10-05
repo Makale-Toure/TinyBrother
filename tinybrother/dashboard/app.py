@@ -21,7 +21,13 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from tinybrother import __version__
-from tinybrother.attack.mapping import TACTICS, tactics_from_tags, techniques_from_tags
+from tinybrother.attack.mapping import (
+    TACTICS,
+    attack_data,
+    tactics_for,
+    tactics_from_tags,
+    techniques_from_tags,
+)
 from tinybrother.config import Config
 from tinybrother.storage import queries
 from tinybrother.storage.db import ALERT_STATUSES, connect
@@ -51,9 +57,9 @@ class RuleCoverage:
             engine = DetectionEngine.from_dirs(cfg.rule_dirs, min_level=cfg.min_severity)
             by_tactic: dict[str, Counter] = {}
             for cr in engine.rules:
-                tactics = tactics_from_tags(cr.rule.tags) or ["unknown"]
+                rule_tactics = tactics_from_tags(cr.rule.tags)
                 for tech in techniques_from_tags(cr.rule.tags):
-                    for ta in tactics:
+                    for ta in tactics_for(tech.technique_id, rule_tactics):
                         by_tactic.setdefault(ta, Counter())[tech.technique_id] += 1
             self.by_tactic = by_tactic
             self.rules = engine.report.loaded
@@ -129,6 +135,11 @@ def create_app(cfg: Config, with_coverage: bool = True) -> FastAPI:
             if not queries.set_status(conn, alert_id, body.status):
                 raise HTTPException(404, "alert not found")
         return {"id": alert_id, "status": body.status}
+
+    @app.get("/api/techniques")
+    def techniques() -> dict:
+        """ATT&CK names and short descriptions, fetched once by the dashboard."""
+        return attack_data()
 
     @app.get("/api/attack")
     def attack(range: str = "24h") -> dict:

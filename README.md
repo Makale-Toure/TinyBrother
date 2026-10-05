@@ -35,7 +35,7 @@ with open detection rules?**
 | ✅ | Offline analysis of `.evtx` files (forensics / replay mode) |
 | ✅ | Event normalisation to a common schema |
 | ✅ | Sigma rule engine: ~2,400 SigmaHQ Windows rules + your own custom rules |
-| ✅ | MITRE ATT&CK enrichment (tactic, technique, sub-technique) on every alert |
+| ✅ | MITRE ATT&CK enrichment on every alert, with technique names and descriptions (ATT&CK v19, offline) |
 | ✅ | SQLite storage for alerts and their triggering events |
 | ✅ | Local dashboard: alert timeline, severity breakdown, ATT&CK heatmap, alert triage |
 | ✅ | Detection benchmark on public attack recordings ([results](docs/benchmark.md)) |
@@ -163,6 +163,13 @@ to any external service unless you explicitly enable an enrichment module.
 - [Sysinternals Sysmon](https://learn.microsoft.com/sysinternals/downloads/sysmon) and
   [SwiftOnSecurity sysmon-config](https://github.com/SwiftOnSecurity/sysmon-config)
 - [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team) for attack simulations
+- [shadcn/ui](https://ui.shadcn.com/) for the design language of the dashboard,
+  [Geist](https://github.com/vercel/geist-font) fonts (SIL OFL 1.1) and [Lucide](https://lucide.dev/) icons (ISC)
+
+ATT&CK® is a registered trademark of The MITRE Corporation. Technique names and descriptions
+bundled in `tinybrother/attack/data/` come from the
+[ATT&CK STIX data](https://github.com/mitre-attack/attack-stix-data) and can be refreshed with
+`python scripts/update_attack_data.py`.
 
 ## License
 

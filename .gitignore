@@ -9,7 +9,7 @@ build/
 .ruff_cache/
 .coverage
 # runtime data
-data/
+/data/
 *.db
 *.sqlite
 config/tinybrother.yaml

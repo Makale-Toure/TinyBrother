@@ -28,7 +28,7 @@ tinybrother = "tinybrother.cli:main"
 include = ["tinybrother*"]
 
 [tool.setuptools.package-data]
-tinybrother = ["dashboard/static/*"]
+tinybrother = ["dashboard/static/*", "dashboard/static/fonts/*", "attack/data/*.json"]
 
 [tool.ruff]
 line-length = 100

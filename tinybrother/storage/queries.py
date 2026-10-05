@@ -218,10 +218,12 @@ def attack_matrix(conn: sqlite3.Connection, hours: float | None) -> dict[str, Co
     """tactic -> Counter(technique -> alert count) for the range."""
     start, _ = time_bounds(conn, hours)
     where, params = _where(start)
+    from tinybrother.attack.mapping import tactics_for
+
     out: dict[str, Counter] = defaultdict(Counter)
     for r in conn.execute(f"SELECT a.techniques, a.tactics FROM alerts a{where}", params):
-        tactics = json.loads(r["tactics"] or "[]") or ["unknown"]
+        rule_tactics = json.loads(r["tactics"] or "[]")
         for t in json.loads(r["techniques"] or "[]"):
-            for ta in tactics:
+            for ta in tactics_for(t, rule_tactics):
                 out[ta][t] += 1
     return out

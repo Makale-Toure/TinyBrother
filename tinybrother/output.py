@@ -82,7 +82,10 @@ _SEV_TAG = {
 def format_alert(alert) -> str:
     ev = alert.event
     ts = ev.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    techs = ",".join(t.technique_id for t in alert.techniques) or "-"
+    techs = ", ".join(
+        f"{t.technique_id} {t.name}" if t.name and t.name != t.technique_id else t.technique_id
+        for t in alert.techniques
+    ) or "-"
     head = f"{ts}  [{_SEV_TAG.get(alert.severity.value, '????')}] {alert.rule_title}  ({techs})"
     return f"{head}\n    {short_channel(ev.channel)} {ev.event_id}  {summary(ev)}"
 
