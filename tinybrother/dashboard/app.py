@@ -150,7 +150,7 @@ def create_app(cfg: Config, with_coverage: bool = True) -> FastAPI:
     @app.get("/api/attack")
     def attack(range: str = "24h") -> dict:
         with db() as conn:
-            hits = queries.attack_matrix(conn, _hours(range))
+            hits, rule_hits = queries.attack_matrix(conn, _hours(range))
         cov = coverage.by_tactic if coverage and coverage.ready else {}
         tactics = []
         for ta in TACTICS + sorted(set(hits) - set(TACTICS)):
@@ -161,7 +161,11 @@ def create_app(cfg: Config, with_coverage: bool = True) -> FastAPI:
                 "id": ta,
                 "techniques": sorted(
                     ({"id": t, "alerts": hits.get(ta, Counter()).get(t, 0),
-                      "rules": cov.get(ta, Counter()).get(t, 0)} for t in techs),
+                      "rules": cov.get(ta, Counter()).get(t, 0),
+                      "triggered_by": [
+                          {"title": title, "alerts": n}
+                          for title, n in rule_hits.get(ta, {}).get(t, Counter()).most_common(5)
+                      ]} for t in techs),
                     key=lambda x: (-x["alerts"], -x["rules"], x["id"]),
                 ),
             })

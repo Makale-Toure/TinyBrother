@@ -57,7 +57,9 @@ def test_triage(client):
 
 def test_attack_matrix(client):
     tactics = {t["id"]: t for t in client.get("/api/attack?range=all").json()["tactics"]}
-    assert any(x["id"] == "T1059.001" and x["alerts"] == 1 for x in tactics["execution"]["techniques"])
+    ps = next(x for x in tactics["execution"]["techniques"] if x["id"] == "T1059.001")
+    assert ps["alerts"] == 1
+    assert ps["triggered_by"] == [{"title": "PowerShell Launched With Encoded Command", "alerts": 1}]
 
 
 def test_rejects_foreign_host_header(client):

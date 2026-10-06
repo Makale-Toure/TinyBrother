@@ -200,7 +200,15 @@ main { max-width: 1440px; margin: 0 auto; padding: 24px; display: grid; gap: 16p
 .tech.h3 { background: var(--heat-3); color: var(--heat-ink-3); }
 .tech.h4 { background: var(--heat-4); color: var(--heat-ink-4); }
 .tech.h5 { background: var(--heat-5); color: var(--heat-ink-5); }
-.tech.active { box-shadow: 0 0 0 2px var(--ring); }
+.tech.active { box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring); }
+.tech .name { display: flex; align-items: center; gap: 6px; }
+.tech .check { width: 14px; height: 14px; stroke-width: 3; flex: none; }
+.tech .via { grid-column: 1 / -1; font-size: 11px; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.filter-chip { border-color: color-mix(in oklab, var(--primary) 60%, transparent); background: color-mix(in oklab, var(--primary) 10%, var(--background)); }
+.filter-chip .icon { width: 14px; height: 14px; }
+.tooltip .tt-label { margin: 8px 0 4px; font-weight: 600; color: var(--foreground); }
+.tooltip .tt-rule { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; color: var(--foreground); }
+.tooltip .tt-hint { font-size: 11px; opacity: .8; }
 
 /* ---------- data table ---------- */
 .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }

@@ -214,19 +214,25 @@ def set_status(conn: sqlite3.Connection, alert_id: int, status: str) -> bool:
     return cur.rowcount > 0
 
 
-def attack_matrix(conn: sqlite3.Connection, hours: float | None) -> dict[str, Counter]:
-    """tactic -> Counter(technique -> alert count) for the range."""
-    start, _ = time_bounds(conn, hours)
-    where, params = _where(start)
+def attack_matrix(
+    conn: sqlite3.Connection, hours: float | None
+) -> tuple[dict[str, Counter], dict[str, dict[str, Counter]]]:
+    """For the range: tactic -> Counter(technique -> alerts), and
+    tactic -> technique -> Counter(rule title -> alerts)."""
     from tinybrother.attack.mapping import tactics_for
 
-    out: dict[str, Counter] = defaultdict(Counter)
-    for r in conn.execute(f"SELECT a.techniques, a.tactics FROM alerts a{where}", params):
+    start, _ = time_bounds(conn, hours)
+    where, params = _where(start)
+    hits: dict[str, Counter] = defaultdict(Counter)
+    rules: dict[str, dict[str, Counter]] = defaultdict(lambda: defaultdict(Counter))
+    sql = f"SELECT a.techniques, a.tactics, a.rule_title FROM alerts a{where}"
+    for r in conn.execute(sql, params):
         rule_tactics = json.loads(r["tactics"] or "[]")
         for t in json.loads(r["techniques"] or "[]"):
             for ta in tactics_for(t, rule_tactics):
-                out[ta][t] += 1
-    return out
+                hits[ta][t] += 1
+                rules[ta][t][r["rule_title"]] += 1
+    return hits, rules
 
 
 SYSMON_CHANNEL = "Microsoft-Windows-Sysmon/Operational"

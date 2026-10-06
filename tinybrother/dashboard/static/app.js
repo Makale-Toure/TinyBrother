@@ -22,6 +22,8 @@ const ICONS = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   warn: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   radar: '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M12 18h.01"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  filter: '<path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/>',
   ext: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
 };
 const icon = (name, cls = "icon") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
@@ -306,10 +308,10 @@ function renderAttack(data) {
   const maxAlerts = Math.max(0, ...data.tactics.flatMap((t) => t.techniques.map((x) => x.alerts)));
   const level = (n) => (n <= 0 || !maxAlerts ? 0 : Math.min(5, 1 + Math.floor((Math.log(n) / Math.log(maxAlerts + 1)) * 5)));
   $("heat-legend").innerHTML = `<span>Fewer</span>${[1, 2, 3, 4, 5].map((l) => `<i style="background:var(--heat-${l})"></i>`).join("")}<span>More alerts</span>`;
-  const covered = data.tactics.reduce((a, t) => a + t.techniques.length, 0);
-  const triggered = data.tactics.reduce((a, t) => a + t.techniques.filter((x) => x.alerts).length, 0);
+  const coveredIds = new Set(data.tactics.flatMap((t) => t.techniques.map((x) => x.id)));
+  const seenIds = new Set(data.tactics.flatMap((t) => t.techniques.filter((x) => x.alerts > 0).map((x) => x.id)));
   $("attack-desc").textContent = data.coverage_ready
-    ? `${triggered} technique-tactic pairs triggered out of ${covered} covered by your rules. Hover for details, click to filter alerts.`
+    ? `${seenIds.size} technique${seenIds.size === 1 ? "" : "s"} detected in this period, out of ${fmtN(coveredIds.size)} your rules can detect. Click a technique to show only its alerts.`
     : "Techniques seen in your alerts, by tactic. Rule coverage is loading…";
   if (!all.length) {
     el.innerHTML = `<div class="empty">${state.showCovered ? "No ATT&CK data yet." : "No technique triggered in this range. Enable “Show covered techniques” to see your coverage."}</div>`;
@@ -320,26 +322,37 @@ function renderAttack(data) {
     return `<div class="tactic">
       <div class="tactic-head"><h4>${esc(tacticName(t.id))}</h4><span>${hit} triggered${state.showCovered ? ` · ${t.techniques.length} covered` : ""}</span></div>
       <div class="tech-list">${t.techniques.map((x) => `
-        <button class="tech h${level(x.alerts)} ${state.technique === x.id ? "active" : ""}" data-t="${esc(x.id)}" data-ta="${esc(t.id)}" data-a="${x.alerts}" data-r="${x.rules}">
-          <span class="name">${esc(techName(x.id))}</span>
+        <button class="tech h${level(x.alerts)} ${state.technique === x.id ? "active" : ""}" aria-pressed="${state.technique === x.id}" data-t="${esc(x.id)}" data-ta="${esc(t.id)}" data-a="${x.alerts}" data-r="${x.rules}">
+          <span class="name">${state.technique === x.id ? icon("check", "icon check") : ""}${esc(techName(x.id))}</span>
           ${x.alerts ? `<span class="count">${fmtN(x.alerts)}</span>` : ""}
           <span class="id">${esc(x.id)}</span>
+          ${x.triggered_by && x.triggered_by.length ? `<span class="via" title="${esc(x.triggered_by.map((r) => r.title).join("\n"))}">via ${esc(x.triggered_by[0].title)}${x.triggered_by.length > 1 ? ` +${x.triggered_by.length - 1}` : ""}</span>` : ""}
         </button>`).join("")}</div></div>`;
   }).join("");
+  const byKey = {};
+  data.tactics.forEach((t) => t.techniques.forEach((x) => { byKey[`${t.id}|${x.id}`] = x; }));
   el.querySelectorAll(".tech").forEach((c) => {
     const id = c.dataset.t, info = tech(id);
+    const rules = byKey[`${c.dataset.ta}|${id}`]?.triggered_by || [];
     bindTip(c, () => `<div class="tt-title">${esc(techFullName(id))}</div>
       <div class="tt-sub">${esc(id)} · ${esc(tacticName(c.dataset.ta))}</div>
       <div class="tt-row"><span>Alerts in range</span><b>${fmtN(c.dataset.a)}</b></div>
       <div class="tt-row"><span>Rules covering it</span><b>${fmtN(c.dataset.r)}</b></div>
-      ${info?.description ? `<p>${esc(info.description)}</p>` : ""}`);
+      ${rules.length ? `<div class="tt-label">Triggered by</div>${rules.map((r) => `<div class="tt-row"><span class="tt-rule">${esc(r.title)}</span><b>${fmtN(r.alerts)}</b></div>`).join("")}` : ""}
+      ${info?.description ? `<p>${esc(info.description)}</p>` : ""}
+      <p class="tt-hint">${state.technique === id ? "Click to remove the filter" : "Click to show only these alerts"}</p>`);
     c.addEventListener("click", () => {
-      state.technique = state.technique === id ? null : id;
-      el.querySelectorAll(".tech").forEach((o) => o.classList.toggle("active", o.dataset.t === state.technique));
-      refreshAlerts(true);
+      tip.classList.remove("show");
+      setTechnique(state.technique === id ? null : id);
       if (state.technique) scrollToAlerts();
     });
   });
+}
+
+function setTechnique(id) {
+  state.technique = id;
+  if (lastAttack) renderAttack(lastAttack);
+  refreshAlerts(true);
 }
 
 // ---------------------------------------------------------------- alerts table
@@ -395,6 +408,10 @@ async function refreshAlerts(reset) {
   $("prev").disabled = state.offset === 0;
   $("next").disabled = to >= data.total;
   $("clear-filters").hidden = !filters.length;
+  $("tech-filter").innerHTML = state.technique
+    ? `<button class="btn outline sm filter-chip" id="tech-chip" title="Remove this filter">${icon("filter")}Technique: ${esc(techName(state.technique))} <span class="mono muted">${esc(state.technique)}</span>${icon("x")}</button>`
+    : "";
+  if (state.technique) $("tech-chip").addEventListener("click", () => setTechnique(null));
 }
 function scrollToAlerts() { $("alerts-card").scrollIntoView({ behavior: "smooth", block: "start" }); }
 
@@ -502,7 +519,7 @@ async function init() {
   $("clear-filters").addEventListener("click", () => {
     state.severities.clear(); state.status = ""; state.q = ""; state.technique = null;
     $("search").value = ""; $("status-filter").value = "";
-    renderSevFilter(); if (lastAttack) renderAttack(lastAttack); refreshAlerts(true);
+    renderSevFilter(); setTechnique(null);
   });
   $("prev").addEventListener("click", () => { state.offset = Math.max(0, state.offset - state.pageSize); refreshAlerts(false); });
   $("next").addEventListener("click", () => { state.offset += state.pageSize; refreshAlerts(false); });
